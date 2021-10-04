@@ -18,6 +18,10 @@ function getParsedTime(runTime) {
   return { time, cones, dnf };
 }
 
+function uniqueID() {
+  return Math.floor(Math.random() * Date.now());
+}
+
 async function parseData(siteData) {
   const jsonTable = HtmlTableToJson.parse(siteData("[name=#top]").html());
   const results = jsonTable.results[2];
@@ -47,6 +51,7 @@ async function parseData(siteData) {
     });
 
     runners.push({
+      id: uniqueID(),
       driver: firstItem.Driver,
       position: Number(firstItem["Pos."].replace("T", "")),
       class: firstItem.Class,
