@@ -9,7 +9,7 @@ import {
 import { RIGHT_ALIGNMENT } from "@elastic/eui/lib/services";
 import "./style.less";
 import { TimerChart } from "./";
-import { getClassName } from "../lib";
+import { getClassName, getRunString } from "../lib";
 function DriverResults({ drivers }) {
   const driversClassified = {};
   const [itemIdToExpandedRowMap, setItemIdToExpandedRowMap] = useState({});
@@ -75,8 +75,14 @@ function DriverResults({ drivers }) {
         field: "runs",
         name: "Fastest time",
         render: (runs) => {
-          const timeArray = runs.map(({ time }) => time);
-          return Math.min(...timeArray);
+          const timeArray = runs
+            .map(({ adjustedTime }) => adjustedTime)
+            .filter((time) => time);
+          return getRunString(
+            runs.find(
+              ({ adjustedTime }) => adjustedTime === Math.min(...timeArray)
+            )
+          );
         },
       },
       {
@@ -105,7 +111,7 @@ function DriverResults({ drivers }) {
       },
     };
     const pagination = {
-      initialPageSize: 10,
+      initialPageSize: 50,
       pageSizeOptions: [10, 25, 50, 100],
     };
 

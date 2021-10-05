@@ -31,7 +31,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "nodemon server/server.js",
-    "dev": "concurrently --kill-others-on-fail \"yarn server\" \"yarn start\""
+    "dev": "concurrently --kill-others --kill-others-on-fail \"yarn server\" \"yarn start\""
   },
   "eslintConfig": {
     "extends": "plugin:react/recommended"

@@ -53,7 +53,7 @@ class App extends Component {
             <EuiPageHeader>
               <EuiPageHeaderSection>
                 <EuiTitle size="l">
-                  <h1>Better Timing</h1>
+                  <h1>timing.best</h1>
                 </EuiTitle>
               </EuiPageHeaderSection>
             </EuiPageHeader>

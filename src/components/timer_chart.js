@@ -6,6 +6,7 @@ import {
   EuiTabs,
   EuiFlexGrid,
   EuiSelectable,
+  EuiText,
   EuiFlexGroup,
 } from "@elastic/eui";
 import {
@@ -21,22 +22,12 @@ import {
   EUI_CHARTS_THEME_LIGHT,
 } from "@elastic/eui/dist/eui_charts_theme";
 import "./style.less";
-import { getClassName } from "../lib";
+import { getClassName, getRunString } from "../lib";
 
 const getFastestDriver = (slowBoi, driversClassified) => {
   return driversClassified[slowBoi.class].find(
     (driver) => driver.position === 1
   );
-};
-
-const getRunString = (run) => {
-  let andString = "";
-  if (run.dnf) {
-    andString = "+ dnf";
-  } else if (run.cones !== 0) {
-    andString = `+ ${run.cones}`;
-  }
-  return `${run.time}${andString}`;
 };
 
 function TimerChart({ driver, driversClassified, drivers }) {
@@ -50,11 +41,21 @@ function TimerChart({ driver, driversClassified, drivers }) {
   const data = [];
   driversSelectedForCompare.map((driverKey) => {
     const selectedDriver = drivers.find((driver) => driver.id === driverKey);
-    selectedDriver.runs.map(({ time, cones }, index) => {
+    const fastestRun = Math.min(
+      ...selectedDriver.runs
+        .map(({ adjustedTime }) => adjustedTime)
+        .filter((time) => time)
+    );
+    selectedDriver.runs.map(({ adjustedTime, cones }, index) => {
+      const x = index + 1;
       if (selectedDriver.id === driver.id) {
-        coneData.push({ x: index, y: cones, g: "Cones hit 😢" });
+        coneData.push({ x, y: cones, g: "Cones hit 😢" });
       }
-      data.push({ x: index, y: time, g: selectedDriver.driver });
+      const dataObject = { x, y: adjustedTime, g: selectedDriver.driver };
+      if (fastestRun === adjustedTime) {
+        dataObject.fastest = true;
+      }
+      data.push(dataObject);
     });
   });
 
@@ -109,31 +110,61 @@ function TimerChart({ driver, driversClassified, drivers }) {
             showLegendDisplayValue={false}
           />
           <BarSeries
-            id="status"
-            name="Status"
+            id="cones"
+            name="Cones"
             data={coneData}
             xAccessor={"x"}
             yAccessors={["y"]}
             splitSeriesAccessors={["g"]}
             stackAccessors={["g"]}
+            groupId="cones"
           />
           <LineSeries
-            id="bars"
+            id="runs"
             name="0"
             data={data}
             xAccessor={"x"}
             yAccessors={["y"]}
             splitSeriesAccessors={["g"]}
             xScaleType={ScaleType.Linear}
+            groupId="runs"
             yScaleType={ScaleType.Linear}
+            fit="linear"
+            pointStyleAccessor={(datum) => {
+              console.log(datum);
+              let style = {};
+              if (!datum.datum) {
+                return;
+              }
+              if (datum.datum.fastest) {
+                style = {
+                  shape: "diamond",
+                  opacity: 0.9,
+                  radius: 5,
+                  fill: "#FFD700",
+                  stroke: "#000000",
+                  strokeWidth: ".3",
+                };
+              }
+              return style;
+            }}
           />
           <Axis id="bottom-axis" position="bottom" showGridLines />
           <Axis
             id="left-axis"
             position="left"
+            title="Run times"
             showGridLines
+            groupId="runs"
             domain={leftDomain}
-            tickFormat={(d) => Number(d).toFixed(2)}
+            tickFormat={(d) => Number(d).toFixed(0)}
+          />
+          <Axis
+            id="right"
+            title="Cones hit"
+            groupId="cones"
+            position="right"
+            tickFormat={(d) => Number(d).toFixed(0)}
           />
         </Chart>
       </EuiFlexItem>
@@ -142,17 +173,35 @@ function TimerChart({ driver, driversClassified, drivers }) {
   const displayRunsGroups = () => (
     <Fragment>
       <EuiFlexGrid columns={4}>
-        {driver.runs
-          .filter((run) => run.runGroup === 1)
-          .map((run, index) => (
+        {driver.runs.map((run, index) => {
+          let speedDifference = "";
+          if (run.adjustedTime && index !== 0) {
+            const lastRun = driver.runs[index - 1].adjustedTime;
+            console.log(lastRun);
+            if (lastRun) {
+              const speedDifferenceNumber = (
+                run.adjustedTime - driver.runs[index - 1].adjustedTime
+              ).toFixed(3);
+
+              const positive = Math.sign(speedDifferenceNumber) === 1;
+              speedDifference = (
+                <EuiText color={positive ? "danger" : "success"}>
+                  <p>{`(${positive ? "+" : ""}${speedDifferenceNumber})`}</p>
+                </EuiText>
+              );
+            }
+          }
+          return (
             <EuiFlexItem key={index}>
-              <p>{`${index}: ` + `${getRunString(run)}`}</p>
+              <p>{`${index + 1}: ${getRunString(run)}`}</p>
+              {speedDifference}
             </EuiFlexItem>
-          ))}
+          );
+        })}
       </EuiFlexGrid>
     </Fragment>
   );
-  console.log(selectedView);
+
   return (
     <div style={{ display: "block", width: "100%" }}>
       <EuiTabs style={{ marginBottom: "10px" }} display="condensed">

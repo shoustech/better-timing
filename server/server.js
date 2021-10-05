@@ -9,13 +9,17 @@ const port = process.env.PORT || 3001;
 
 function getParsedTime(runTime) {
   const timeInfo = runTime.split("+");
-  const time = Number(timeInfo[0]);
+  const rawTime = Number(timeInfo[0]);
+  let adjustedTime;
   let cones = 0;
   let dnf = false;
   if (timeInfo[1]) {
     timeInfo[1] === "dnf" ? (dnf = true) : (cones = Number(timeInfo[1]));
   }
-  return { time, cones, dnf };
+  if (!dnf) {
+    adjustedTime = rawTime + cones * 2;
+  }
+  return { rawTime, adjustedTime, cones, dnf };
 }
 
 function uniqueID() {
@@ -31,7 +35,6 @@ async function parseData(siteData) {
   while (results.length > 0) {
     let firstItem = results.shift();
     if (typeof firstItem.Driver === "undefined") {
-      console.log("here");
       firstItem = results.shift();
     }
     const secondItem = results.shift();
@@ -39,14 +42,14 @@ async function parseData(siteData) {
 
     Object.entries(firstItem).forEach(([key, value]) => {
       if (key.includes("Run") && value !== "") {
-        const { cones, time, dnf } = getParsedTime(value);
-        runs.push({ runGroup: 1, time, dnf, cones });
+        const { cones, rawTime, dnf, adjustedTime } = getParsedTime(value);
+        runs.push({ runGroup: 1, rawTime, adjustedTime, dnf, cones });
       }
     });
     Object.entries(secondItem).forEach(([key, value]) => {
       if (key.includes("Run") && value !== "") {
-        const { cones, time, dnf } = getParsedTime(value);
-        runs.push({ runGroup: 2, time, dnf, cones });
+        const { cones, rawTime, dnf, adjustedTime } = getParsedTime(value);
+        runs.push({ runGroup: 2, rawTime, adjustedTime, dnf, cones });
       }
     });
 
