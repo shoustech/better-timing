@@ -63,6 +63,7 @@ function DriverResults({ drivers }) {
       {
         field: "runs",
         name: "Cones killed",
+        sortable: true,
         render: (runs) => {
           let conesKilled = 0;
           runs.forEach(({ cones }) => {
