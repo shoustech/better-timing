@@ -22,7 +22,7 @@ import {
   EUI_CHARTS_THEME_LIGHT,
 } from "@elastic/eui/dist/eui_charts_theme";
 import "./style.less";
-import { getClassName, getRunString } from "../lib";
+import { getClassName, getRunString, getRunStats } from "../lib";
 
 const getFastestDriver = (slowBoi, driversClassified) => {
   return driversClassified[slowBoi.class].find(
@@ -37,6 +37,11 @@ function TimerChart({ driver, driversClassified, drivers }) {
     driver.id,
     fastestDriver.id,
   ]);
+  const selectedDriverStats = getRunStats(
+    driversSelectedForCompare.map((driverKey) =>
+      drivers.find((driver) => driver.id === driverKey)
+    )
+  );
   const coneData = [];
   const data = [];
   driversSelectedForCompare.map((driverKey) => {
@@ -79,7 +84,7 @@ function TimerChart({ driver, driversClassified, drivers }) {
   };
 
   const leftDomain = {
-    min: 65,
+    min: selectedDriverStats.fastestTime,
   };
 
   const changeSelectedDrivers = (options) => {

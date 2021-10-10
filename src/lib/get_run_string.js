@@ -1,5 +1,8 @@
 export function getRunString(run) {
   let andString = "";
+  if (!run) {
+    return "dns";
+  }
   if (run.dnf) {
     andString = "+dnf";
   } else if (run.cones !== 0) {
